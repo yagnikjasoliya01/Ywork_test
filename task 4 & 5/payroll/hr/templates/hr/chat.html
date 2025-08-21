@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Department Chat</title>
+</head>
+<body>
+    <h1>Department Chat</h1>
+    <h2 id="dept-id"></h2>
+    <div id="messages"></div>
+    <br>
+    <input type="text" id="usernameInput" placeholder="Enter your name">
+    <input type="text" id="messageInput" placeholder="Enter your message">
+    <button id="sendBtn">Send</button>
+
+    <script>
+        const departmentId = prompt("Please enter your department ID (from step 1 of Task 4):");
+        if (!departmentId) {
+            alert("Department ID is required.");
+            window.location.reload();
+        }
+
+        document.getElementById('dept-id').textContent = `Chat for Department: ${departmentId}`;
+
+        const chatSocket = new WebSocket(
+            `ws://` + window.location.host + `/ws/chat/${departmentId}/`
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = `${data.username}: ${data.message}`;
+            document.getElementById('messages').appendChild(messageDiv);
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.getElementById('sendBtn').onclick = function(e) {
+            const messageInputDom = document.getElementById('messageInput');
+            const usernameInputDom = document.getElementById('usernameInput');
+            const message = messageInputDom.value;
+            const username = usernameInputDom.value;
+
+            if (message && username) {
+                chatSocket.send(JSON.stringify({
+                    'message': message,
+                    'username': username
+                }));
+                messageInputDom.value = '';
+            } else {
+                alert("Please enter both your name and a message.");
+            }
+        };
+
+        // Handle enter key press on message input
+        document.getElementById('messageInput').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // 13 is the Enter key code
+                document.getElementById('sendBtn').click();
+            }
+        };
+
+    </script>
+</body>
+</html>
